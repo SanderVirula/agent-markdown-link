@@ -76,11 +76,13 @@ describe("public release surface", () => {
 
     expect(manifest).toMatchObject({
       name: "agent-markdown-link",
-      version: "0.4.0",
+      version: "0.4.1",
+      author: { name: "SSanderV" },
       homepage: "https://github.com/SSanderV/agent-markdown-link",
       repository: "https://github.com/SSanderV/agent-markdown-link",
     });
     expect(interfaceMetadata).toMatchObject({
+      developerName: "SSanderV",
       websiteURL: "https://github.com/SSanderV/agent-markdown-link",
       privacyPolicyURL:
         "https://github.com/SSanderV/agent-markdown-link/blob/main/PRIVACY.md",
@@ -116,10 +118,12 @@ describe("public release surface", () => {
     });
     expect(claude).toMatchObject({
       name: "agent-markdown-link",
+      owner: { name: "SSanderV" },
       plugins: [
         {
           name: "agent-markdown-link",
-          version: "0.4.0",
+          version: "0.4.1",
+          author: { name: "SSanderV" },
           source: "./marketplace/claude/plugins/agent-markdown-link",
         },
       ],

@@ -1,9 +1,9 @@
 {
   "name": "agent-markdown-link",
-  "version": "0.4.0",
+  "version": "0.4.1",
   "description": "Loads curated local Markdown context and stores durable local memory.",
   "author": {
-    "name": "Sander",
+    "name": "SSanderV",
     "url": "https://github.com/SSanderV"
   },
   "homepage": "https://github.com/SSanderV/agent-markdown-link",
@@ -20,7 +20,7 @@
     "displayName": "Agent Markdown Link",
     "shortDescription": "Curated Markdown memory for AI agents.",
     "longDescription": "Loads curated local Markdown context and stores durable memory records without editing canonical summaries.",
-    "developerName": "Sander",
+    "developerName": "SSanderV",
     "category": "Productivity",
     "capabilities": [
       "Local context",

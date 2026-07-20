@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.4.1 - 2026-07-20
+
+- Standardize public marketplace and plugin author metadata on `SSanderV`.
+
 ## 0.4.0 - 2026-07-20
 
 - Store accepted durable captures as immutable, immediately searchable local Markdown memory by default for new setups.

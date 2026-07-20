@@ -1,19 +1,19 @@
 {
   "name": "agent-markdown-link",
   "owner": {
-    "name": "Sander"
+    "name": "SSanderV"
   },
   "metadata": {
     "description": "Curated local Markdown memory for Codex, Claude Code, and desktop Cowork.",
-    "version": "0.4.0"
+    "version": "0.4.1"
   },
   "plugins": [
     {
       "name": "agent-markdown-link",
       "description": "Loads curated local Markdown context and stores durable local memory.",
-      "version": "0.4.0",
+      "version": "0.4.1",
       "author": {
-        "name": "Sander"
+        "name": "SSanderV"
       },
       "source": "./marketplace/claude/plugins/agent-markdown-link"
     }
