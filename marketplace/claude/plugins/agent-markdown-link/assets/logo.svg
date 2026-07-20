@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="Agent Markdown Link">
+  <path fill="#4F46E5" d="M12 7h27l13 13v32a5 5 0 0 1-5 5H17a5 5 0 0 1-5-5V12a5 5 0 0 1 5-5Z"/>
+  <path fill="#fff" opacity=".92" d="M39 7v13h13z"/>
+  <path fill="none" stroke="#fff" stroke-linecap="round" stroke-width="4" d="M22 31h15M22 40h10"/>
+  <circle cx="47" cy="45" r="10" fill="#fff"/>
+  <circle cx="47" cy="45" r="4" fill="#4F46E5"/>
+  <path fill="none" stroke="#fff" stroke-linecap="round" stroke-width="4" d="M38 42l3-2"/>
+</svg>

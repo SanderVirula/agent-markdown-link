@@ -1,0 +1,21 @@
+{
+  "name": "agent-markdown-link",
+  "owner": {
+    "name": "Sander"
+  },
+  "metadata": {
+    "description": "Curated local Markdown memory for Codex and Claude Code.",
+    "version": "0.1.0"
+  },
+  "plugins": [
+    {
+      "name": "agent-markdown-link",
+      "description": "Loads curated local Markdown context and captures review candidates.",
+      "version": "0.1.0",
+      "author": {
+        "name": "Sander"
+      },
+      "source": "./marketplace/claude/plugins/agent-markdown-link"
+    }
+  ]
+}

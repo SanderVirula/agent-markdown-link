@@ -1,0 +1,42 @@
+{
+  "name": "agent-markdown-link",
+  "version": "0.1.0",
+  "description": "Loads curated local Markdown context and captures review candidates.",
+  "author": {
+    "name": "Sander",
+    "url": "https://github.com/SanderVirula"
+  },
+  "homepage": "https://github.com/SanderVirula/agent-markdown-link",
+  "repository": "https://github.com/SanderVirula/agent-markdown-link",
+  "license": "Apache-2.0",
+  "keywords": [
+    "markdown",
+    "obsidian",
+    "memory",
+    "agents"
+  ],
+  "skills": "./skills/",
+  "interface": {
+    "displayName": "Agent Markdown Link",
+    "shortDescription": "Curated Markdown memory for AI agents.",
+    "longDescription": "Loads curated local Markdown context and submits reviewable memory candidates without editing canonical notes.",
+    "developerName": "Sander",
+    "category": "Productivity",
+    "capabilities": [
+      "Local context",
+      "Review candidates"
+    ],
+    "websiteURL": "https://github.com/SanderVirula/agent-markdown-link",
+    "privacyPolicyURL": "https://github.com/SanderVirula/agent-markdown-link/blob/main/PRIVACY.md",
+    "termsOfServiceURL": "https://github.com/SanderVirula/agent-markdown-link/blob/main/TERMS.md",
+    "brandColor": "#4F46E5",
+    "composerIcon": "./assets/icon.svg",
+    "logo": "./assets/logo.svg",
+    "logoDark": "./assets/logo-dark.svg",
+    "defaultPrompt": [
+      "Recall the relevant decisions for this project.",
+      "Capture a durable memory candidate for review.",
+      "Search the curated notes for prior project context."
+    ]
+  }
+}

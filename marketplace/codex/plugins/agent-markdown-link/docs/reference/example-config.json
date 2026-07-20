@@ -1,0 +1,23 @@
+{
+  "schemaVersion": 1,
+  "vaultRoot": "/home/example/Notes",
+  "inboxPath": "Inbox/Agent Markdown Link",
+  "captureMode": "explicit",
+  "writeMode": "inbox",
+  "projects": [
+    {
+      "projectId": "project-a",
+      "workspaceRoots": [
+        "/home/example/src/project-a"
+      ],
+      "contextFiles": [
+        "Memory/Profile.md",
+        "Projects/project-a.md"
+      ],
+      "searchRoots": [
+        "Memory",
+        "Projects"
+      ]
+    }
+  ]
+}

@@ -1,0 +1,19 @@
+{
+  "name": "agent-markdown-link",
+  "displayName": "Agent Markdown Link",
+  "version": "0.1.0",
+  "description": "Loads curated local Markdown context and captures review candidates.",
+  "author": {
+    "name": "Sander",
+    "url": "https://github.com/SanderVirula"
+  },
+  "homepage": "https://github.com/SanderVirula/agent-markdown-link",
+  "repository": "https://github.com/SanderVirula/agent-markdown-link",
+  "license": "Apache-2.0",
+  "keywords": [
+    "markdown",
+    "obsidian",
+    "memory",
+    "agents"
+  ]
+}

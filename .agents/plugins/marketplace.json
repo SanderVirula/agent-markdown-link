@@ -1,0 +1,20 @@
+{
+  "name": "agent-markdown-link",
+  "interface": {
+    "displayName": "Agent Markdown Link"
+  },
+  "plugins": [
+    {
+      "name": "agent-markdown-link",
+      "source": {
+        "source": "local",
+        "path": "./marketplace/codex/plugins/agent-markdown-link"
+      },
+      "policy": {
+        "installation": "AVAILABLE",
+        "authentication": "ON_INSTALL"
+      },
+      "category": "Productivity"
+    }
+  ]
+}

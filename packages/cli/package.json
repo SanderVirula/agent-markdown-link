@@ -1,0 +1,19 @@
+{
+  "name": "agent-markdown-link",
+  "version": "0.1.0",
+  "private": false,
+  "type": "module",
+  "bin": {
+    "agent-markdown": "./bin/agent-markdown.js"
+  },
+  "files": [
+    "bin",
+    "dist"
+  ],
+  "dependencies": {
+    "@agent-markdown-link/core": "0.1.0"
+  },
+  "engines": {
+    "node": ">=22"
+  }
+}
