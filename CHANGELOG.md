@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.4.0 - 2026-07-20
+
+- Store accepted durable captures as immutable, immediately searchable local Markdown memory by default for new setups.
+- Add one shared `memoryPath` across mapped and default projects while retaining opt-in legacy Inbox and outbox behavior.
+
 ## 0.3.0 - 2026-07-20
 
 - Add a guided, no-overwrite `init` command for local configuration.

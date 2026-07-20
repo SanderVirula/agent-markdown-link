@@ -32,7 +32,7 @@ From a source checkout, the equivalent commands are:
 .\node_modules\.bin\agent-markdown.cmd init
 ```
 
-The wizard asks for one vault, workspace mapping, project ID, ordered context files, search roots, existing review Inbox, and optional Cowork default. It validates the config and existing vault/workspace roots, writes only the local config file, and refuses to overwrite one that already exists. It never creates or edits vault notes or folders. Create the chosen Inbox and any referenced files or folders in your vault before using their paths.
+The wizard asks for one vault, workspace mapping, project ID, ordered context files, search roots, an existing automatic-memory folder, and optional Cowork default. Automatic memory is the default; choose `inbox` only for legacy review. It validates the config and existing vault/workspace roots, writes only the local config file, and refuses to overwrite one that already exists. It never creates or edits vault notes or folders. Create the chosen memory folder (or Inbox) and any referenced files or folders in your vault before using their paths. The wizard does not configure Git or sync exclusions, so do not publish private memory unintentionally.
 
 Use `--config <absolute-path>` before `init` to write a non-default config location.
 
@@ -48,9 +48,9 @@ macOS:   ~/Library/Application Support/agent-markdown-link/config.json
 Linux:   ~/.config/agent-markdown-link/config.json
 ```
 
-The configuration selects a vault root, an Inbox for candidate notes, and project mappings. Each mapping supplies workspace roots, ordered context files, and optional search roots. No fixed vault layout is required.
+The configuration selects a vault root, one shared vault-relative `memoryPath` for automatic records, and project mappings. Each mapping supplies workspace roots, ordered context files, and optional search roots. `memoryPath` is searched for every mapped or default project; `projectId` is provenance in each record, not a retrieval boundary. No fixed vault layout is required. Existing users may opt in manually: create an existing private vault folder, set `writeMode` to `memory`, and set `memoryPath`. Existing Inbox and outbox configurations remain compatible.
 
-Claude Desktop Cowork may report a workspace path that cannot match a host mapping. To give such sessions the same configured vault, set the optional top-level `defaultProjectId` to one existing project ID. Exact workspace matches still win. Without this explicit setting, unmapped sessions fail closed. Because every unmapped Claude MCP session can then use that project's context, search roots, and review Inbox, choose only a project whose configured scope is appropriate for that trust boundary.
+Claude Desktop Cowork may report a workspace path that cannot match a host mapping. To give such sessions the same configured vault, set the optional top-level `defaultProjectId` to one existing project ID. Exact workspace matches still win. Without this explicit setting, unmapped sessions fail closed. Every mapped or default project can search the shared `memoryPath`; choose a vault/configuration whose trust boundary is appropriate.
 
 `AGENT_MARKDOWN_LINK_CONFIG` may override the default with an absolute path. From a source checkout, verify a config with the workspace-local executable:
 
@@ -81,6 +81,6 @@ codex plugin remove agent-markdown-link@agent-markdown-link
 claude plugin uninstall agent-markdown-link@agent-markdown-link
 ```
 
-Your vault, configuration, and review candidates are not removed automatically.
+Your vault, configuration, memory records, and legacy review candidates are not removed automatically.
 
 To roll back, pin the marketplace to a previous release tag, reinstall that plugin version, and start a new host session. Do not copy unknown plugin files over a working installation.

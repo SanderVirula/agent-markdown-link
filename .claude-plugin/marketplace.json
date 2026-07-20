@@ -5,13 +5,13 @@
   },
   "metadata": {
     "description": "Curated local Markdown memory for Codex, Claude Code, and desktop Cowork.",
-    "version": "0.3.0"
+    "version": "0.4.0"
   },
   "plugins": [
     {
       "name": "agent-markdown-link",
-      "description": "Loads curated local Markdown context and captures review candidates.",
-      "version": "0.3.0",
+      "description": "Loads curated local Markdown context and stores durable local memory.",
+      "version": "0.4.0",
       "author": {
         "name": "Sander"
       },

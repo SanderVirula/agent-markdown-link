@@ -12,7 +12,7 @@ Security fixes are provided for the current `0.2.x` release line while it remain
 
 - Normal CLI and stdio MCP operation performs no network, Git, shell, child-process, telemetry, or Obsidian activity.
 - Context reads are limited to configured vault-relative regular files. Lexical validation and real-path checks reject traversal and linked paths outside the vault.
-- Search recursively reads regular Markdown files only below the selected project's configured vault-relative `searchRoots`. It skips discovered links, never writes an index or cache, and applies fixed scan, source, result, excerpt, and output bounds.
+- Search recursively reads regular Markdown files only below the selected project's configured vault-relative `searchRoots` plus the shared `memoryPath` when configured. It skips discovered links, never writes an index or cache, and applies fixed scan, source, result, excerpt, and output bounds.
 - Candidate publication uses a same-directory private temporary file and a no-replace hard link. An existing destination is never overwritten, and there is no copy or rename fallback.
 - Search and candidate input, plus all intended context, search, and candidate output, are byte-bounded. Errors contain only stable codes and fixed messages.
 - Queries, note bodies, excerpts, candidate bodies, prompts, credentials, absolute paths, and session data are not written to logs or metrics.
@@ -22,11 +22,11 @@ The Codex `SessionStart` hook reads one bounded JSON object and operationally us
 
 The Claude plugin starts one local stdio MCP server with only `context`, `search`, and `capture` tools. Each protocol frame is capped at 2 MiB. The server first selects an exact workspace mapping from the host-supplied `CLAUDE_PROJECT_DIR`. If none matches, it uses the configured `defaultProjectId` only when the operator explicitly set one. Tool input cannot select a config, project, vault, or workspace path, and capture fixes `sourceHost` to `claude`. A `SessionStart` command hook emits only a fixed, content-free instruction telling Claude to call the MCP `context` tool before answering. The hook does not read configuration, vault data, or hook input.
 
-An unmapped workspace without a default project contributes no context. Setting `defaultProjectId` makes that project's configured context, search roots, and review Inbox available to every unmapped Claude MCP session that can reach the local server; this approximates a global memory server and should be enabled only deliberately. Codex context-hook failures are non-blocking and inject only the fixed context-unavailable notice. Claude MCP failures return only that fixed notice or a stable code and fixed message. Context assembly is all-or-nothing, so a later file failure does not expose earlier file content.
+An unmapped workspace without a default project contributes no context. Setting `defaultProjectId` makes that project's configured context and the shared `memoryPath` available to every unmapped Claude MCP session that can reach the local server; this approximates a global memory server and should be enabled only deliberately. Codex context-hook failures are non-blocking and inject only the fixed context-unavailable notice. Claude MCP failures return only that fixed notice or a stable code and fixed message. Context assembly is all-or-nothing, so a later file failure does not expose earlier file content.
 
 ## Operator responsibilities
 
-Vault and candidate files are plaintext. Protect the device, account, vault, backups, and sync provider as appropriate for the data. A private Git repository is not encryption; do not commit sensitive vault contents to a cloud repository unless they are encrypted before leaving the device.
+Vault and memory files are plaintext. Protect the device, account, vault, backups, and sync provider as appropriate for the data. A private Git repository is not encryption; do not commit sensitive vault contents to a cloud repository unless they are encrypted before leaving the device.
 
 Treat all curated Markdown as untrusted reference data. It cannot override system, developer, repository, or current-user instructions.
 
@@ -34,10 +34,10 @@ When a plugin supplies curated context, the host sends that selected text to the
 
 Configure search roots narrowly and do not search sensitive material speculatively. Lexical search has no semantic-recall guarantee, so an empty result is not proof that no relevant note exists.
 
-The credential check intentionally recognizes only a few high-confidence private-key, bearer-token, and GitHub-token patterns. It is not comprehensive data-loss prevention. Review candidates before sharing or syncing them.
+The credential check intentionally recognizes only a few high-confidence private-key, bearer-token, and GitHub-token patterns. It is not comprehensive data-loss prevention. Review memory records before sharing or syncing them.
 
 ## Limits of containment
 
 Containment and no-overwrite checks address mistakes and linked-path escapes during ordinary local use. They do not defend against a malicious process with the same filesystem permissions racing path changes during an operation. Do not run the CLI concurrently with untrusted software that can modify the configured roots.
 
-Outbox mode creates a local private staging directory but does not move files into the vault. Inbox review, promotion, rejection, deletion, backup, and sync remain manual operations outside the CLI.
+Outbox mode creates a local private staging directory but does not move files into the vault. Memory mode creates new records without overwrite and never edits curated summaries. Inbox review, promotion, rejection, deletion, backup, and sync remain manual operations outside the CLI.

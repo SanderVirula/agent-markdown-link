@@ -1,7 +1,7 @@
 {
   "name": "agent-markdown-link",
-  "version": "0.3.0",
-  "description": "Loads curated local Markdown context and captures review candidates.",
+  "version": "0.4.0",
+  "description": "Loads curated local Markdown context and stores durable local memory.",
   "author": {
     "name": "Sander",
     "url": "https://github.com/SSanderV"
@@ -19,12 +19,12 @@
   "interface": {
     "displayName": "Agent Markdown Link",
     "shortDescription": "Curated Markdown memory for AI agents.",
-    "longDescription": "Loads curated local Markdown context and submits reviewable memory candidates without editing canonical notes.",
+    "longDescription": "Loads curated local Markdown context and stores durable memory records without editing canonical summaries.",
     "developerName": "Sander",
     "category": "Productivity",
     "capabilities": [
       "Local context",
-      "Review candidates"
+      "Durable memory"
     ],
     "websiteURL": "https://github.com/SSanderV/agent-markdown-link",
     "privacyPolicyURL": "https://github.com/SSanderV/agent-markdown-link/blob/main/PRIVACY.md",
@@ -35,7 +35,7 @@
     "logoDark": "./assets/logo-dark.svg",
     "defaultPrompt": [
       "Recall the relevant decisions for this project.",
-      "Capture a durable memory candidate for review.",
+      "Capture a durable memory for later recall.",
       "Search the curated notes for prior project context."
     ]
   }

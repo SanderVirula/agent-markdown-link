@@ -6650,6 +6650,36 @@ ${request.evidence}`);
 ${sections.join("\n\n")}
 `;
 }
+function serializeMemory(request, metadata) {
+  const frontmatter = [
+    "---",
+    "schema: agent-markdown-link/memory",
+    "schemaVersion: 1",
+    `id: ${JSON.stringify(metadata.id)}`,
+    `createdAt: ${JSON.stringify(metadata.createdAt)}`,
+    `projectId: ${JSON.stringify(metadata.projectId)}`,
+    `sourceHost: ${request.sourceHost}`,
+    `kind: ${request.kind}`,
+    "status: memory",
+    `title: ${JSON.stringify(request.title)}`,
+    "---"
+  ].join("\n");
+  const sections = [`## Memory
+
+${request.proposedKnowledge}`];
+  if (request.rationale !== void 0)
+    sections.push(`## Rationale
+
+${request.rationale}`);
+  if (request.evidence !== void 0)
+    sections.push(`## Evidence
+
+${request.evidence}`);
+  return `${frontmatter}
+
+${sections.join("\n\n")}
+`;
+}
 
 // packages/core/dist/candidates/capture.js
 async function captureCandidate(config, project, request, options = {}) {
@@ -6661,18 +6691,24 @@ async function captureCandidate(config, project, request, options = {}) {
   const createdAt = (options.now ?? (() => /* @__PURE__ */ new Date()))().toISOString();
   const timestamp = createdAt.replace(/[-:.]/gu, "");
   const filename = `${timestamp}-${candidateId}.md`;
-  const markdown = serializeCandidate(normalizedRequest, {
+  const metadata = {
     id: candidateId,
     createdAt,
     projectId: project.projectId
-  });
+  };
+  const markdown = config.writeMode === "memory" ? serializeMemory(normalizedRequest, metadata) : serializeCandidate(normalizedRequest, metadata);
   const bytes = Buffer.from(markdown, "utf8");
   if (bytes.byteLength > config.limits.candidateBytes) {
     throw new AgentMarkdownError("E_SIZE_LIMIT");
   }
   let root;
   let relativePath;
-  if (config.writeMode === "inbox") {
+  if (config.writeMode === "memory") {
+    if (config.memoryPath === void 0)
+      throw new AgentMarkdownError("E_INTERNAL");
+    root = config.vaultRoot;
+    relativePath = `${config.memoryPath}/${filename}`;
+  } else if (config.writeMode === "inbox") {
     root = config.vaultRoot;
     relativePath = `${config.inboxPath}/${filename}`;
   } else {
@@ -6981,7 +7017,11 @@ function serializedOutputBytes(response) {
 `, "utf8");
 }
 async function searchMarkdown(config, project, request) {
-  if (project.searchRoots.length === 0) {
+  const searchRoots = [
+    ...project.searchRoots,
+    ...config.memoryPath === void 0 ? [] : [config.memoryPath]
+  ];
+  if (searchRoots.length === 0) {
     return { schemaVersion: 1, searchedFiles: 0, truncated: false, results: [] };
   }
   const canonicalVaultRoot = await realpath2(config.vaultRoot);
@@ -7105,7 +7145,7 @@ async function searchMarkdown(config, project, request) {
     }
     await flushPendingFiles();
   }
-  for (const searchRoot of project.searchRoots) {
+  for (const searchRoot of searchRoots) {
     if (stopped)
       break;
     await walk(await resolveExistingDirectory(canonicalVaultRoot, searchRoot));
@@ -7231,14 +7271,15 @@ var config_schema_default = {
   title: "Agent Markdown Link configuration version 1",
   type: "object",
   additionalProperties: false,
-  required: ["schemaVersion", "vaultRoot", "inboxPath", "captureMode", "projects"],
+  required: ["schemaVersion", "vaultRoot", "captureMode", "projects"],
   properties: {
     schemaVersion: { const: 1 },
     vaultRoot: { $ref: "#/definitions/absolutePath" },
     inboxPath: { $ref: "#/definitions/vaultRelativePath" },
+    memoryPath: { $ref: "#/definitions/vaultRelativePath" },
     outboxRoot: { $ref: "#/definitions/absolutePath" },
     captureMode: { enum: ["disabled", "explicit"] },
-    writeMode: { enum: ["outbox", "inbox"] },
+    writeMode: { enum: ["outbox", "inbox", "memory"] },
     hookPolicy: { enum: ["observe", "warn", "enforce"] },
     defaultProjectId: {
       type: "string",
@@ -7261,6 +7302,16 @@ var config_schema_default = {
     logging: { $ref: "#/definitions/logging" },
     metrics: { $ref: "#/definitions/metrics" }
   },
+  allOf: [
+    {
+      if: { properties: { writeMode: { const: "inbox" } }, required: ["writeMode"] },
+      then: { required: ["inboxPath"] }
+    },
+    {
+      if: { properties: { writeMode: { const: "memory" } }, required: ["writeMode"] },
+      then: { required: ["memoryPath"] }
+    }
+  ],
   definitions: {
     absolutePath: {
       type: "string",
@@ -7654,6 +7705,13 @@ function confirmation(value) {
     return true;
   invalidInput3();
 }
+function captureDestination(value) {
+  if (value === "memory")
+    return "memory";
+  if (value === "inbox")
+    return "inbox";
+  invalidInput3();
+}
 async function assertDirectory(directory) {
   try {
     if ((await stat3(directory)).isDirectory())
@@ -7674,14 +7732,15 @@ async function initializeConfig(options) {
     const projectId = await ask(lines, options.io.stdout, `Project ID [${suggestedProjectId}]: `, suggestedProjectId);
     const contextFiles = list(await ask(lines, options.io.stdout, "Context files, comma-separated and vault-relative [none]: ", ""));
     const searchRoots = list(await ask(lines, options.io.stdout, "Search roots, comma-separated and vault-relative [none]: ", ""));
-    const inboxPath = await ask(lines, options.io.stdout, "Existing review Inbox, relative to vault [Inbox/Agent Markdown Link]: ", "Inbox/Agent Markdown Link");
+    const destination = captureDestination(await ask(lines, options.io.stdout, "Capture destination [memory/inbox] [memory]: ", "memory"));
+    const selectedPath = await ask(lines, options.io.stdout, destination === "memory" ? "Existing automatic memory folder, relative to vault [Memory/Agent Markdown Link]: " : "Existing review Inbox, relative to vault [Inbox/Agent Markdown Link]: ", destination === "memory" ? "Memory/Agent Markdown Link" : "Inbox/Agent Markdown Link");
     const useAsDefault = confirmation(await ask(lines, options.io.stdout, "Use this project for unmapped hosts such as Cowork? [y/N]: ", ""));
     const rawConfig = {
       schemaVersion: 1,
       vaultRoot,
-      inboxPath,
       captureMode: "explicit",
-      writeMode: "inbox",
+      writeMode: destination,
+      ...destination === "memory" ? { memoryPath: selectedPath } : { inboxPath: selectedPath },
       ...useAsDefault ? { defaultProjectId: projectId } : {},
       projects: [
         {
@@ -7697,6 +7756,7 @@ async function initializeConfig(options) {
       validated = validateConfig(rawConfig);
       await assertDirectory(validated.vaultRoot);
       await assertDirectory(validated.projects[0].workspaceRoots[0]);
+      await assertDirectory(path4.join(validated.vaultRoot, selectedPath));
     } catch (error) {
       if (error instanceof AgentMarkdownError && error.code === "E_INPUT_INVALID")
         throw error;
@@ -7728,6 +7788,7 @@ async function initializeConfig(options) {
     }
     await writeText(options.io.stdout, `Configuration created.
 ${options.configPath}
+Agent Markdown Link does not configure Git or sync exclusions; private memory must not be published unintentionally.
 `);
   } finally {
     interface_.close();

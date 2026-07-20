@@ -145,10 +145,9 @@ describe("guided configuration", () => {
     const vault = path.join(root, "vault");
     const workspace = path.join(root, "sample-project");
     const memory = path.join(vault, "Memory");
-    const inbox = path.join(vault, "Inbox");
+    const automaticMemory = path.join(vault, "Memory", "Automatic");
     const configPath = path.join(root, "config", "config.json");
-    await mkdir(memory, { recursive: true });
-    await mkdir(inbox);
+    await mkdir(automaticMemory, { recursive: true });
     await mkdir(workspace);
     await writeFile(path.join(memory, "Profile.md"), "Curated profile.\n", "utf8");
     const vaultBefore = await readdir(vault, { recursive: true });
@@ -161,7 +160,8 @@ describe("guided configuration", () => {
         "",
         "Memory/Profile.md",
         "Memory",
-        "Inbox",
+        "",
+        "Memory/Automatic",
         "yes",
         "",
       ].join("\n"),
@@ -171,12 +171,13 @@ describe("guided configuration", () => {
     expect(result.exitCode, result.stderr).toBe(0);
     expect(result.stderr).toBe("");
     expect(result.stdout).toContain("Configuration created.");
+    expect(result.stdout).toContain("does not configure Git or sync exclusions");
     expect(JSON.parse(await readFile(configPath, "utf8"))).toEqual({
       schemaVersion: 1,
       vaultRoot: vault,
-      inboxPath: "Inbox",
+      memoryPath: "Memory/Automatic",
       captureMode: "explicit",
-      writeMode: "inbox",
+      writeMode: "memory",
       defaultProjectId: "sample-project",
       projects: [
         {
@@ -188,6 +189,28 @@ describe("guided configuration", () => {
       ],
     });
     expect(await readdir(vault, { recursive: true })).toEqual(vaultBefore);
+  });
+
+  it("keeps legacy Inbox review available when explicitly selected", async () => {
+    const root = await temporaryRoot();
+    const vault = path.join(root, "vault");
+    const workspace = path.join(root, "sample-project");
+    const inbox = path.join(vault, "Inbox");
+    const configPath = path.join(root, "config.json");
+    await mkdir(inbox, { recursive: true });
+    await mkdir(workspace);
+
+    const result = await run(
+      ["--config", configPath, "init"],
+      [vault, workspace, "", "", "", "inbox", "Inbox", "no", ""].join("\n"),
+      { cwd: workspace },
+    );
+
+    expect(result.exitCode, result.stderr).toBe(0);
+    expect(JSON.parse(await readFile(configPath, "utf8"))).toMatchObject({
+      inboxPath: "Inbox",
+      writeMode: "inbox",
+    });
   });
 
   it("refuses to overwrite an existing config before prompting", async () => {
@@ -217,7 +240,29 @@ describe("guided configuration", () => {
 
     const result = await run(
       ["--config", configPath, "init"],
-      [vault, workspace, "project-a", "", "", "../Inbox", "no", ""].join("\n"),
+      [vault, workspace, "project-a", "", "", "memory", "../Memory", "no", ""].join("\n"),
+      { cwd: workspace },
+    );
+
+    expect(result.exitCode).toBe(2);
+    expect(JSON.parse(result.stderr)).toEqual({
+      code: "E_INPUT_INVALID",
+      message: "Input is invalid.",
+    });
+    await expect(readFile(configPath, "utf8")).rejects.toMatchObject({ code: "ENOENT" });
+  });
+
+  it("rejects a missing automatic memory directory without creating a config", async () => {
+    const root = await temporaryRoot();
+    const vault = path.join(root, "vault");
+    const workspace = path.join(root, "workspace");
+    const configPath = path.join(root, "config.json");
+    await mkdir(vault);
+    await mkdir(workspace);
+
+    const result = await run(
+      ["--config", configPath, "init"],
+      [vault, workspace, "project-a", "", "", "memory", "Memory/Missing", "no", ""].join("\n"),
       { cwd: workspace },
     );
 

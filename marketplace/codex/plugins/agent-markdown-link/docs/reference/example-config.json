@@ -1,9 +1,9 @@
 {
   "schemaVersion": 1,
   "vaultRoot": "/home/example/Notes",
-  "inboxPath": "Inbox/Agent Markdown Link",
   "captureMode": "explicit",
-  "writeMode": "inbox",
+  "writeMode": "memory",
+  "memoryPath": "Memory/Automatic",
   "defaultProjectId": "project-a",
   "projects": [
     {

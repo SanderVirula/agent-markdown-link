@@ -92,6 +92,12 @@ function confirmation(value: string): boolean {
   invalidInput();
 }
 
+function captureDestination(value: string): "memory" | "inbox" {
+  if (value === "memory") return "memory";
+  if (value === "inbox") return "inbox";
+  invalidInput();
+}
+
 async function assertDirectory(directory: string): Promise<void> {
   try {
     if ((await stat(directory)).isDirectory()) return;
@@ -143,11 +149,21 @@ export async function initializeConfig(options: {
         "",
       ),
     );
-    const inboxPath = await ask(
+    const destination = captureDestination(
+      await ask(
+        lines,
+        options.io.stdout,
+        "Capture destination [memory/inbox] [memory]: ",
+        "memory",
+      ),
+    );
+    const selectedPath = await ask(
       lines,
       options.io.stdout,
-      "Existing review Inbox, relative to vault [Inbox/Agent Markdown Link]: ",
-      "Inbox/Agent Markdown Link",
+      destination === "memory"
+        ? "Existing automatic memory folder, relative to vault [Memory/Agent Markdown Link]: "
+        : "Existing review Inbox, relative to vault [Inbox/Agent Markdown Link]: ",
+      destination === "memory" ? "Memory/Agent Markdown Link" : "Inbox/Agent Markdown Link",
     );
     const useAsDefault = confirmation(
       await ask(
@@ -161,9 +177,9 @@ export async function initializeConfig(options: {
     const rawConfig = {
       schemaVersion: 1 as const,
       vaultRoot,
-      inboxPath,
       captureMode: "explicit" as const,
-      writeMode: "inbox" as const,
+      writeMode: destination,
+      ...(destination === "memory" ? { memoryPath: selectedPath } : { inboxPath: selectedPath }),
       ...(useAsDefault ? { defaultProjectId: projectId } : {}),
       projects: [
         {
@@ -180,6 +196,7 @@ export async function initializeConfig(options: {
       validated = validateConfig(rawConfig);
       await assertDirectory(validated.vaultRoot);
       await assertDirectory(validated.projects[0]!.workspaceRoots[0]!);
+      await assertDirectory(path.join(validated.vaultRoot, selectedPath));
     } catch (error) {
       if (error instanceof AgentMarkdownError && error.code === "E_INPUT_INVALID") throw error;
       invalidInput();
@@ -209,7 +226,11 @@ export async function initializeConfig(options: {
       }
       throw error;
     }
-    await writeText(options.io.stdout, `Configuration created.\n${options.configPath}\n`);
+    await writeText(
+      options.io.stdout,
+      `Configuration created.\n${options.configPath}\n` +
+        "Agent Markdown Link does not configure Git or sync exclusions; private memory must not be published unintentionally.\n",
+    );
   } finally {
     interface_.close();
     options.io.stdin.unpipe(input);

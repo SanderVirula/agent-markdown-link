@@ -6544,14 +6544,15 @@ var config_schema_default = {
   title: "Agent Markdown Link configuration version 1",
   type: "object",
   additionalProperties: false,
-  required: ["schemaVersion", "vaultRoot", "inboxPath", "captureMode", "projects"],
+  required: ["schemaVersion", "vaultRoot", "captureMode", "projects"],
   properties: {
     schemaVersion: { const: 1 },
     vaultRoot: { $ref: "#/definitions/absolutePath" },
     inboxPath: { $ref: "#/definitions/vaultRelativePath" },
+    memoryPath: { $ref: "#/definitions/vaultRelativePath" },
     outboxRoot: { $ref: "#/definitions/absolutePath" },
     captureMode: { enum: ["disabled", "explicit"] },
-    writeMode: { enum: ["outbox", "inbox"] },
+    writeMode: { enum: ["outbox", "inbox", "memory"] },
     hookPolicy: { enum: ["observe", "warn", "enforce"] },
     defaultProjectId: {
       type: "string",
@@ -6574,6 +6575,16 @@ var config_schema_default = {
     logging: { $ref: "#/definitions/logging" },
     metrics: { $ref: "#/definitions/metrics" }
   },
+  allOf: [
+    {
+      if: { properties: { writeMode: { const: "inbox" } }, required: ["writeMode"] },
+      then: { required: ["inboxPath"] }
+    },
+    {
+      if: { properties: { writeMode: { const: "memory" } }, required: ["writeMode"] },
+      then: { required: ["memoryPath"] }
+    }
+  ],
   definitions: {
     absolutePath: {
       type: "string",

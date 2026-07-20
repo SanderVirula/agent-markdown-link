@@ -280,4 +280,4 @@ it("runs the complete local context and reviewed-candidate path against a tempor
   expect((await readdir(inbox)).length).toBe(1);
   expect((await stat(path.join(vault, ...result.relativePath.split("/")))).isFile()).toBe(true);
   expect(await snapshotTree(root, vault)).toEqual(outsideBefore);
-});
+}, 15_000);

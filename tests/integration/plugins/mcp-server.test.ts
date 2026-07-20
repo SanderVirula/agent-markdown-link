@@ -112,11 +112,15 @@ it("serves context, search, and review-only capture over packaged stdio MCP", as
 
   try {
     await client.connect(transport);
-    expect((await client.listTools()).tools.map((tool) => tool.name)).toEqual([
+    const tools = (await client.listTools()).tools;
+    expect(tools.map((tool) => tool.name)).toEqual([
       "context",
       "search",
       "capture",
     ]);
+    expect(tools.find((tool) => tool.name === "capture")?.description).toContain(
+      "durable Markdown memory",
+    );
 
     const startup = await client.callTool({ name: "context", arguments: {} });
     expect(startup.isError).not.toBe(true);
@@ -216,30 +220,34 @@ it("uses an explicit default project against the same vault when the workspace i
   temporaryRoots.push(root);
   const vault = path.join(root, "vault");
   const memory = path.join(vault, "Memory");
-  const inbox = path.join(vault, "Inbox");
+  const automaticMemory = path.join(vault, "Memory", "Automatic");
   const mappedWorkspace = path.join(root, "mapped");
   const unmappedWorkspace = path.join(root, "unmapped");
   await mkdir(memory, { recursive: true });
-  await mkdir(inbox);
+  await mkdir(automaticMemory);
   await mkdir(mappedWorkspace);
   await mkdir(unmappedWorkspace);
   await writeFile(path.join(memory, "Shared.md"), "Same configured vault canary.\n", "utf8");
+  await writeFile(
+    path.join(automaticMemory, "Shared-Memory.md"),
+    "Same automatic memory canary.\n",
+    "utf8",
+  );
   const configPath = path.join(root, "config.json");
   await writeFile(
     configPath,
     `${JSON.stringify({
       schemaVersion: 1,
       vaultRoot: vault,
-      inboxPath: "Inbox",
       captureMode: "explicit",
-      writeMode: "inbox",
+      writeMode: "memory",
+      memoryPath: "Memory/Automatic",
       defaultProjectId: "mapped-only",
       projects: [
         {
           projectId: "mapped-only",
           workspaceRoots: [mappedWorkspace],
           contextFiles: ["Memory/Shared.md"],
-          searchRoots: ["Memory"],
         },
       ],
     })}\n`,
@@ -270,11 +278,11 @@ it("uses an explicit default project against the same vault when the workspace i
 
     const search = await client.callTool({
       name: "search",
-      arguments: { query: "configured vault canary" },
+      arguments: { query: "automatic memory canary" },
     });
     expect(search.isError).not.toBe(true);
     expect(JSON.parse(textContent(search))).toMatchObject({
-      results: [{ relativePath: "Memory/Shared.md" }],
+      results: [{ relativePath: "Memory/Automatic/Shared-Memory.md" }],
     });
 
     const capture = await client.callTool({
@@ -287,7 +295,11 @@ it("uses an explicit default project against the same vault when the workspace i
     });
     expect(capture.isError).not.toBe(true);
     expect(JSON.parse(textContent(capture))).toMatchObject({ projectId: "mapped-only" });
-    expect(await readdir(inbox)).toHaveLength(1);
+    const records = await readdir(automaticMemory);
+    expect(records).toHaveLength(2);
+    expect(await readFile(path.join(automaticMemory, records.find((record) => record.endsWith(".md") && record !== "Shared-Memory.md")!), "utf8")).toContain(
+      "status: memory",
+    );
   } finally {
     await client.close();
   }

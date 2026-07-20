@@ -95,7 +95,7 @@ async function configuredProject(
 export function createMcpServer(
   environment: McpEnvironment = { env: process.env },
 ): McpServer {
-  const server = new McpServer({ name: "agent-markdown-link", version: "0.3.0" });
+  const server = new McpServer({ name: "agent-markdown-link", version: "0.4.0" });
 
   server.registerTool(
     "context",
@@ -155,7 +155,8 @@ export function createMcpServer(
   server.registerTool(
     "capture",
     {
-      description: "Submit a bounded Markdown memory candidate for human review.",
+      description:
+        "Store bounded durable Markdown memory locally; legacy Inbox configurations create a review candidate.",
       inputSchema: z
         .object({
           kind: z.enum(CANDIDATE_KINDS),
