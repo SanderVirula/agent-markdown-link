@@ -4,6 +4,7 @@ import {
   mkdir,
   mkdtemp,
   readFile,
+  realpath,
   readdir,
   rm,
   stat,
@@ -19,7 +20,7 @@ const repositoryRoot = fileURLToPath(new URL("../../../", import.meta.url));
 const temporaryRoots: string[] = [];
 
 async function temporaryRoot(): Promise<string> {
-  const root = await mkdtemp(path.join(tmpdir(), "agent-markdown-vertical-"));
+  const root = await realpath(await mkdtemp(path.join(tmpdir(), "agent-markdown-vertical-")));
   temporaryRoots.push(root);
   return root;
 }

@@ -5,6 +5,7 @@ import {
   mkdir,
   mkdtemp,
   readFile,
+  realpath,
   readdir,
   rm,
   writeFile,
@@ -63,7 +64,7 @@ async function hash(filePath: string): Promise<string> {
 
 describe.each(["codex", "claude"] as const)("relocated %s plugin", (host) => {
   it("loads curated context and creates only a review candidate", async () => {
-    const root = await mkdtemp(path.join(tmpdir(), "agent-markdown-plugin-"));
+    const root = await realpath(await mkdtemp(path.join(tmpdir(), "agent-markdown-plugin-")));
     temporaryRoots.push(root);
     const pluginRoot = path.join(root, "relocated plugin ü", host);
     await mkdir(path.dirname(pluginRoot), { recursive: true });
