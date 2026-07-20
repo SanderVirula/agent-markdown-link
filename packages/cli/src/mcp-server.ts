@@ -105,7 +105,7 @@ export function createMcpServer(
   environment: McpEnvironment = { env: process.env },
 ): McpServer {
   const deliveredSessions = new Set<string>();
-  const server = new McpServer({ name: "agent-markdown-link", version: "0.2.0" });
+  const server = new McpServer({ name: "agent-markdown-link", version: "0.2.1" });
 
   server.registerTool(
     "context",

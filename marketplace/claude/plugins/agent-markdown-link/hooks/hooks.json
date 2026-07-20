@@ -6,29 +6,8 @@
         "matcher": "startup|resume|clear|compact",
         "hooks": [
           {
-            "type": "mcp_tool",
-            "server": "plugin:agent-markdown-link:memory",
-            "tool": "context",
-            "input": {
-              "hookEventName": "SessionStart",
-              "sessionId": "${session_id}"
-            },
-            "timeout": 10
-          }
-        ]
-      }
-    ],
-    "UserPromptSubmit": [
-      {
-        "hooks": [
-          {
-            "type": "mcp_tool",
-            "server": "plugin:agent-markdown-link:memory",
-            "tool": "context",
-            "input": {
-              "hookEventName": "UserPromptSubmit",
-              "sessionId": "${session_id}"
-            },
+            "type": "command",
+            "command": "node \"${CLAUDE_PLUGIN_ROOT}/runtime/context-reminder.mjs\"",
             "timeout": 10
           }
         ]

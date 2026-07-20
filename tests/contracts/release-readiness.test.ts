@@ -75,7 +75,7 @@ describe("public release surface", () => {
 
     expect(manifest).toMatchObject({
       name: "agent-markdown-link",
-      version: "0.2.0",
+      version: "0.2.1",
       homepage: "https://github.com/SanderVirula/agent-markdown-link",
       repository: "https://github.com/SanderVirula/agent-markdown-link",
     });
@@ -118,7 +118,7 @@ describe("public release surface", () => {
       plugins: [
         {
           name: "agent-markdown-link",
-          version: "0.2.0",
+          version: "0.2.1",
           source: "./marketplace/claude/plugins/agent-markdown-link",
         },
       ],

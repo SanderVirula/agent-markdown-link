@@ -9,7 +9,7 @@ describe("shared agent skill", () => {
     const text = await readFile(skillUrl, "utf8");
 
     expect(text).toMatch(/^---\nname: agent-markdown-link\ndescription: Use when /u);
-    expect(text).toMatch(/context.*supplied automatically.*SessionStart/isu);
+    expect(text).toMatch(/SessionStart.*Codex.*context directly.*Claude.*MCP.*context.*before answering/isu);
     expect(text).toContain("scripts/agent-markdown.mjs");
     expect(text).toMatch(/\bnode\b.*\bcapture\b/isu);
     expect(text).not.toContain("agent-markdown context");

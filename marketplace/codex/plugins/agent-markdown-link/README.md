@@ -21,11 +21,11 @@ Full configuration, upgrade, uninstall, and rollback instructions are in [INSTAL
 ## How it works
 
 1. You configure a local Markdown vault, candidate Inbox, and one or more workspace mappings.
-2. The host supplies ordered, curated context at session start.
+2. At session start, Codex supplies ordered context directly; Claude loads it through the bundled local connector before answering.
 3. An agent may run a bounded lexical search only when the supplied context is insufficient.
 4. An agent may explicitly submit one candidate for human review; you edit, promote, or reject it yourself.
 
-The runtime has no automatic network, Git, Obsidian, sync, canonical-edit, delete, or promotion action. An unmapped workspace contributes no context. A loading error returns a fixed unavailable notice without blocking the host session.
+The runtime has no automatic network, Git, Obsidian, sync, canonical-edit, delete, or promotion action. An unmapped workspace contributes no context. Loading errors are sanitized and do not block the host session.
 
 Claude uses a bundled local stdio MCP server, so desktop Cowork can reach the same host configuration and vault as Claude Code. Cowork sessions without the Claude Desktop local bridge are not supported.
 

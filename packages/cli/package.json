@@ -1,6 +1,6 @@
 {
   "name": "agent-markdown-link",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "private": false,
   "type": "module",
   "bin": {
@@ -11,7 +11,7 @@
     "dist"
   ],
   "dependencies": {
-    "@agent-markdown-link/core": "0.2.0",
+    "@agent-markdown-link/core": "0.2.1",
     "@modelcontextprotocol/sdk": "1.29.0",
     "zod": "4.4.3"
   },

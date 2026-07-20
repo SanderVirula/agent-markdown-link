@@ -20,9 +20,9 @@ Security fixes are provided for the current `0.2.x` release line while it remain
 
 The Codex `SessionStart` hook reads one bounded JSON object and operationally uses only its event name, source, and working directory. Extra host fields are ignored; the runtime does not read transcripts. Successful curated context is capped at 9,000 UTF-8 bytes, and serialized hook stdout is capped at 32,768 bytes.
 
-The Claude plugin starts one local stdio MCP server with only `context`, `search`, and `capture` tools. Each protocol frame is capped at 2 MiB. The server selects a project only from the host-supplied `CLAUDE_PROJECT_DIR`; tool input cannot select a config, vault, or workspace path, and capture fixes `sourceHost` to `claude`. A `UserPromptSubmit` hook supplies context once if MCP was not connected for `SessionStart`, and the server suppresses duplicate delivery for the same session.
+The Claude plugin starts one local stdio MCP server with only `context`, `search`, and `capture` tools. Each protocol frame is capped at 2 MiB. The server selects a project only from the host-supplied `CLAUDE_PROJECT_DIR`; tool input cannot select a config, vault, or workspace path, and capture fixes `sourceHost` to `claude`. A `SessionStart` command hook emits only a fixed, content-free instruction telling Claude to call the MCP `context` tool before answering. The hook does not read configuration, vault data, or hook input.
 
-An unmapped workspace contributes no context. Every other context-hook failure is non-blocking and injects only the fixed context-unavailable notice. MCP search and capture failures return only a stable code and fixed message. Context assembly is all-or-nothing, so a later file failure does not expose earlier file content.
+An unmapped workspace contributes no context. Codex context-hook failures are non-blocking and inject only the fixed context-unavailable notice. Claude MCP failures return only that fixed notice or a stable code and fixed message. Context assembly is all-or-nothing, so a later file failure does not expose earlier file content.
 
 ## Operator responsibilities
 
