@@ -104,15 +104,17 @@ describe("curated context", () => {
 
     const text = await assembleContext(config, project);
 
-    expect(text.startsWith(WARNING)).toBe(true);
-    expect(text).toContain('--- source: "Memory/one.md" bytes: 11 ---\nfirst body\n--- end source ---');
-    expect(text).toContain('--- source: "Memory/two.md" bytes: 11 ---\nsecond body\n--- end source ---');
+    expect(text).toBe(
+      `${WARNING}\n\n` +
+        '--- source: "Memory/one.md" bytes: 11 ---\nfirst body\n--- end source ---\n\n' +
+        '--- source: "Memory/two.md" bytes: 11 ---\nsecond body\n--- end source ---',
+    );
     expect(text.indexOf("Memory/one.md")).toBeLessThan(text.indexOf("Memory/two.md"));
     expect(text).not.toContain(root);
     expect(Buffer.byteLength(text, "utf8")).toBeLessThanOrEqual(config.limits.hookOutputBytes);
   });
 
-  it("rejects a source above the effective per-file byte limit", async () => {
+  it("fails closed for a source above the effective per-file byte limit", async () => {
     const root = await temporaryRoot();
     const vault = await createVault(root);
     await writeFile(path.join(vault, "large.md"), "four", "utf8");
@@ -124,17 +126,124 @@ describe("curated context", () => {
     await expect(assembleContext(config, project)).rejects.toMatchObject({ code: "E_SIZE_LIMIT" });
   });
 
-  it("rejects before aggregate source bytes exceed the project limit", async () => {
+  it("fails closed without decoding an oversized invalid UTF-8 source", async () => {
+    const root = await temporaryRoot();
+    const vault = await createVault(root);
+    await writeFile(path.join(vault, "invalid-large.md"), Buffer.from([0xc3, 0x28, 0x41]));
+    const { config, project } = fixture(root, {
+      contextFiles: ["invalid-large.md"],
+      limits: { contextFileBytes: 2, contextTotalBytes: 2 },
+    });
+
+    await expect(assembleContext(config, project)).rejects.toMatchObject({ code: "E_SIZE_LIMIT" });
+  });
+
+  it("skips a source that exceeds the aggregate limit and continues in order", async () => {
     const root = await temporaryRoot();
     const vault = await createVault(root);
     await writeFile(path.join(vault, "one.md"), "123", "utf8");
     await writeFile(path.join(vault, "two.md"), "456", "utf8");
+    await writeFile(path.join(vault, "three.md"), "7", "utf8");
     const { config, project } = fixture(root, {
-      contextFiles: ["one.md", "two.md"],
+      contextFiles: ["one.md", "two.md", "three.md"],
       limits: { contextFileBytes: 3, contextTotalBytes: 5 },
     });
 
-    await expect(assembleContext(config, project)).rejects.toMatchObject({ code: "E_SIZE_LIMIT" });
+    const text = await assembleContext(config, project);
+
+    expect(text).toContain('--- source: "one.md" bytes: 3 ---\n123');
+    expect(text).toContain('--- source: "three.md" bytes: 1 ---\n7');
+    expect(text).toContain('--- omitted sources: 1 ---\n"two.md" bytes: 3');
+    expect(text).not.toContain("456");
+    expect(text.indexOf('source: "one.md"')).toBeLessThan(text.indexOf('source: "three.md"'));
+  });
+
+  it("skips a non-fitting middle source and includes a later source", async () => {
+    const root = await temporaryRoot();
+    const vault = await createVault(root);
+    await writeFile(path.join(vault, "one.md"), "first", "utf8");
+    await writeFile(path.join(vault, "two.md"), "MIDDLE_CANARY".repeat(60), "utf8");
+    await writeFile(path.join(vault, "three.md"), "last", "utf8");
+    const { config, project } = fixture(root, {
+      contextFiles: ["one.md", "two.md", "three.md"],
+      limits: { hookOutputBytes: 1_000, contextFileBytes: 1_000, contextTotalBytes: 2_000 },
+    });
+
+    const text = await assembleContext(config, project);
+
+    expect(text).toContain('--- source: "one.md" bytes: 5 ---\nfirst');
+    expect(text).toContain('--- source: "three.md" bytes: 4 ---\nlast');
+    expect(text).toContain('--- omitted sources: 1 ---\n"two.md" bytes: 780');
+    expect(text).not.toContain("MIDDLE_CANARY");
+    expect(text).toContain(
+      "Omitted sources were not loaded; use agent-markdown search for on-demand recall when available.",
+    );
+    expect(Buffer.byteLength(text, "utf8")).toBeLessThanOrEqual(1_000);
+  });
+
+  it("keeps an earlier source when it fits with the actual omission notice", async () => {
+    const root = await temporaryRoot();
+    const vault = await createVault(root);
+    const earlierBody = "a".repeat(8_300);
+    const laterBody = "b".repeat(600);
+    await writeFile(path.join(vault, "earlier.md"), earlierBody, "utf8");
+    await writeFile(path.join(vault, "later.md"), laterBody, "utf8");
+    const { config, project } = fixture(root, {
+      contextFiles: ["earlier.md", "later.md"],
+      limits: { hookOutputBytes: 9_000, contextFileBytes: 10_000, contextTotalBytes: 20_000 },
+    });
+
+    const text = await assembleContext(config, project);
+
+    expect(text).toContain(earlierBody);
+    expect(text).not.toContain(laterBody);
+    expect(text).toContain('--- omitted sources: 1 ---\n"later.md" bytes: 600');
+    expect(Buffer.byteLength(text, "utf8")).toBeLessThanOrEqual(9_000);
+  });
+
+  it("uses a count-only omission notice when logical paths exceed the notice reserve", async () => {
+    const root = await temporaryRoot();
+    const vault = await createVault(root);
+    await mkdir(path.join(vault, "Memory"));
+    const contextFiles = Array.from({ length: 10 }, (_, index) => {
+      const prefix = index.toString().padStart(2, "0");
+      return `Memory/${prefix}-${"x".repeat(76)}.md`;
+    });
+    for (const logicalPath of contextFiles) {
+      await writeFile(path.join(vault, logicalPath), "x".repeat(100), "utf8");
+    }
+    const { config, project } = fixture(root, {
+      contextFiles,
+      limits: { hookOutputBytes: 800, contextFileBytes: 200, contextTotalBytes: 2_000 },
+    });
+
+    const text = await assembleContext(config, project);
+
+    expect(text).toContain("--- omitted sources: 8 bytes: 800 ---");
+    expect(text).not.toContain(contextFiles[2]!);
+    expect(Buffer.byteLength(text, "utf8")).toBeLessThanOrEqual(800);
+  });
+
+  it("packs deterministically using UTF-8 byte lengths", async () => {
+    const root = await temporaryRoot();
+    const vault = await createVault(root);
+    const includedBody = "é".repeat(100);
+    const omittedBody = "終".repeat(200);
+    await writeFile(path.join(vault, "included.md"), includedBody, "utf8");
+    await writeFile(path.join(vault, "omitted.md"), omittedBody, "utf8");
+    const { config, project } = fixture(root, {
+      contextFiles: ["included.md", "omitted.md"],
+      limits: { hookOutputBytes: 1_000, contextFileBytes: 1_000, contextTotalBytes: 2_000 },
+    });
+
+    const first = await assembleContext(config, project);
+    const second = await assembleContext(config, project);
+
+    expect(first).toBe(second);
+    expect(first).toContain(includedBody);
+    expect(first).toContain('"omitted.md" bytes: 600');
+    expect(first).not.toContain("終");
+    expect(Buffer.byteLength(first, "utf8")).toBeLessThanOrEqual(1_000);
   });
 
   it("rejects complete framed output above the global output limit", async () => {
