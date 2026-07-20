@@ -7756,7 +7756,7 @@ async function initializeConfig(options) {
       validated = validateConfig(rawConfig);
       await assertDirectory(validated.vaultRoot);
       await assertDirectory(validated.projects[0].workspaceRoots[0]);
-      await assertDirectory(path4.join(validated.vaultRoot, selectedPath));
+      await resolveExistingDirectory(validated.vaultRoot, selectedPath);
     } catch (error) {
       if (error instanceof AgentMarkdownError && error.code === "E_INPUT_INVALID")
         throw error;

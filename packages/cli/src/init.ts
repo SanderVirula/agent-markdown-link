@@ -5,6 +5,7 @@ import { Transform } from "node:stream";
 
 import {
   AgentMarkdownError,
+  resolveExistingDirectory,
   validateConfig,
 } from "@agent-markdown-link/core";
 
@@ -196,7 +197,7 @@ export async function initializeConfig(options: {
       validated = validateConfig(rawConfig);
       await assertDirectory(validated.vaultRoot);
       await assertDirectory(validated.projects[0]!.workspaceRoots[0]!);
-      await assertDirectory(path.join(validated.vaultRoot, selectedPath));
+      await resolveExistingDirectory(validated.vaultRoot, selectedPath);
     } catch (error) {
       if (error instanceof AgentMarkdownError && error.code === "E_INPUT_INVALID") throw error;
       invalidInput();

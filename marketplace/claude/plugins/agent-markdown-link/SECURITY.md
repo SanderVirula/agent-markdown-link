@@ -6,7 +6,7 @@ Agent Markdown Link is a local file tool. It is designed to reduce accidental di
 
 Use [GitHub private vulnerability reporting](https://github.com/SSanderV/agent-markdown-link/security/advisories/new) for security issues. Do not include real vault contents, credentials, or other personal data. General bugs belong in the public issue tracker.
 
-Security fixes are provided for the current `0.2.x` release line while it remains supported. Pre-release snapshots and modified forks are not supported by the maintainer.
+Security fixes are provided for the current `0.4.x` release line while it remains supported. Pre-release snapshots and modified forks are not supported by the maintainer.
 
 ## Runtime guarantees
 

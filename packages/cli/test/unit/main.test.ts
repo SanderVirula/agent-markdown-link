@@ -1,4 +1,4 @@
-import { mkdir, mkdtemp, readFile, readdir, rm, unlink, writeFile } from "node:fs/promises";
+import { mkdir, mkdtemp, readFile, readdir, rm, symlink, unlink, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import path from "node:path";
 import { Readable, Writable } from "node:stream";
@@ -263,6 +263,31 @@ describe("guided configuration", () => {
     const result = await run(
       ["--config", configPath, "init"],
       [vault, workspace, "project-a", "", "", "memory", "Memory/Missing", "no", ""].join("\n"),
+      { cwd: workspace },
+    );
+
+    expect(result.exitCode).toBe(2);
+    expect(JSON.parse(result.stderr)).toEqual({
+      code: "E_INPUT_INVALID",
+      message: "Input is invalid.",
+    });
+    await expect(readFile(configPath, "utf8")).rejects.toMatchObject({ code: "ENOENT" });
+  });
+
+  it("rejects an automatic memory directory that escapes through a link", async () => {
+    const root = await temporaryRoot();
+    const vault = path.join(root, "vault");
+    const workspace = path.join(root, "workspace");
+    const outside = path.join(root, "outside");
+    const configPath = path.join(root, "config.json");
+    await mkdir(vault);
+    await mkdir(workspace);
+    await mkdir(outside);
+    await symlink(outside, path.join(vault, "Memory"), process.platform === "win32" ? "junction" : "dir");
+
+    const result = await run(
+      ["--config", configPath, "init"],
+      [vault, workspace, "project-a", "", "", "memory", "Memory", "no", ""].join("\n"),
       { cwd: workspace },
     );
 

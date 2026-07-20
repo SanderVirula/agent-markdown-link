@@ -18,6 +18,7 @@ export {
 export { searchMarkdown, type SearchResponseV1 } from "./search/search.js";
 export { loadConfig } from "./config/load.js";
 export { isAbsoluteLocalPath, resolveConfigPath } from "./config/locations.js";
+export { resolveExistingDirectory } from "./fs/safe-path.js";
 export { selectProject } from "./config/project.js";
 export { validateConfig } from "./config/validate.js";
 export type { ResolvedConfig, ResolvedProject } from "./config/types.js";
