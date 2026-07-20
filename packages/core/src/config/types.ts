@@ -1,5 +1,5 @@
 export type CaptureMode = "disabled" | "explicit";
-export type WriteMode = "outbox" | "inbox";
+export type WriteMode = "outbox" | "inbox" | "memory";
 export type HookPolicy = "observe" | "warn" | "enforce";
 
 export interface ConfigLimits {
@@ -42,7 +42,8 @@ export interface MetricsSettings {
 export interface AgentMarkdownConfigV1 {
   readonly schemaVersion: 1;
   readonly vaultRoot: string;
-  readonly inboxPath: string;
+  readonly inboxPath?: string;
+  readonly memoryPath?: string;
   readonly outboxRoot?: string;
   readonly captureMode: CaptureMode;
   readonly writeMode?: WriteMode;

@@ -214,6 +214,39 @@ describe("configuration validation and loading", () => {
     expect(resolved.projects[0]?.searchRoots).toEqual([]);
   });
 
+  it("accepts direct memory and preserves its shared vault path", () => {
+    const resolved = validateConfig({
+      ...validConfig,
+      inboxPath: undefined,
+      writeMode: "memory",
+      memoryPath: "Memory/Automatic",
+    });
+
+    expect(resolved).toMatchObject({
+      writeMode: "memory",
+      memoryPath: "Memory/Automatic",
+    });
+  });
+
+  it.each([
+    ["memory without memoryPath", { ...validConfig, inboxPath: undefined, writeMode: "memory" }],
+    ["inbox without inboxPath", { ...validConfig, inboxPath: undefined, writeMode: "inbox" }],
+    [
+      "escaping memoryPath",
+      { ...validConfig, writeMode: "memory", memoryPath: "../Memory" },
+    ],
+  ])("rejects %s", (_name, fixture) => {
+    expect(() => validateConfig(fixture)).toThrowError(
+      expect.objectContaining({ code: "E_CONFIG_INVALID" }),
+    );
+  });
+
+  it("allows an explicit outbox without an Inbox", () => {
+    expect(() =>
+      validateConfig({ ...validConfig, inboxPath: undefined, writeMode: "outbox" }),
+    ).not.toThrow();
+  });
+
   it("accepts a default project only when it names a configured project", () => {
     expect(validateConfig({ ...validConfig, defaultProjectId: "project-a" })).toMatchObject({
       defaultProjectId: "project-a",
