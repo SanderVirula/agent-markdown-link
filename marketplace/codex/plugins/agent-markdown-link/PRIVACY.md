@@ -8,4 +8,4 @@ When the plugin supplies context or an agent invokes search, the selected text, 
 
 If `defaultProjectId` is configured, every unmapped Claude MCP session that can reach the local server may use that project's configured context, search roots, and review Inbox. Leave it unset when that broader local-session scope is not appropriate.
 
-Questions may be filed through [GitHub Issues](https://github.com/SanderVirula/agent-markdown-link/issues).
+Questions may be filed through [GitHub Issues](https://github.com/SSanderV/agent-markdown-link/issues).

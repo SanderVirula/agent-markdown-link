@@ -19,9 +19,6 @@ import { z } from "zod";
 
 const CONTEXT_BYTES = 9_000;
 const MCP_FRAME_BYTES = 2 * 1_024 * 1_024;
-const UNAVAILABLE =
-  "Agent Markdown Link curated context is unavailable for this session. Continue without assuming memory was loaded.";
-const HOOK_EVENTS = ["SessionStart", "UserPromptSubmit"] as const;
 const CANDIDATE_KINDS = [
   "decision",
   "fact",
@@ -30,8 +27,6 @@ const CANDIDATE_KINDS = [
   "procedure",
   "other",
 ] as const;
-
-type HookEventName = (typeof HOOK_EVENTS)[number];
 
 interface McpEnvironment {
   readonly env: NodeJS.ProcessEnv;
@@ -43,15 +38,6 @@ function text(textValue: string) {
 
 function errorResult(error: unknown) {
   return { ...text(JSON.stringify(toSanitizedDiagnostic(error))), isError: true };
-}
-
-function hookOutput(hookEventName: HookEventName, additionalContext: string): string {
-  return JSON.stringify({
-    hookSpecificOutput: {
-      hookEventName,
-      additionalContext,
-    },
-  });
 }
 
 function boundedStdin(): Transform {
@@ -109,24 +95,13 @@ async function configuredProject(
 export function createMcpServer(
   environment: McpEnvironment = { env: process.env },
 ): McpServer {
-  const deliveredSessions = new Set<string>();
   const server = new McpServer({ name: "agent-markdown-link", version: "0.2.2" });
 
   server.registerTool(
     "context",
     {
       description: "Read curated Markdown context for the configured local project.",
-      inputSchema: z
-        .object({
-          hookEventName: z.enum(HOOK_EVENTS).optional(),
-          sessionId: z.string().min(1).max(256).optional(),
-        })
-        .strict()
-        .refine(
-          (value) =>
-            (value.hookEventName === undefined) === (value.sessionId === undefined),
-          "hookEventName and sessionId must be supplied together",
-        ),
+      inputSchema: z.object({}).strict(),
       annotations: {
         readOnlyHint: true,
         destructiveHint: false,
@@ -134,9 +109,7 @@ export function createMcpServer(
         openWorldHint: false,
       },
     },
-    async ({ hookEventName, sessionId }) => {
-      if (sessionId !== undefined && deliveredSessions.has(sessionId)) return text("");
-
+    async () => {
       try {
         const { config, project } = await configuredProject(environment);
         const context = await assembleContext(
@@ -149,15 +122,8 @@ export function createMcpServer(
           },
           project,
         );
-        if (sessionId !== undefined) deliveredSessions.add(sessionId);
-        return text(
-          hookEventName === undefined ? context : hookOutput(hookEventName, context),
-        );
+        return text(context);
       } catch (error) {
-        if (sessionId !== undefined && hookEventName !== undefined) {
-          deliveredSessions.add(sessionId);
-          return text(hookOutput(hookEventName, UNAVAILABLE));
-        }
         return errorResult(error);
       }
     },

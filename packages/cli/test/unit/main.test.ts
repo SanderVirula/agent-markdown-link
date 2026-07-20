@@ -1,4 +1,4 @@
-import { mkdir, mkdtemp, readFile, rm, unlink, writeFile } from "node:fs/promises";
+import { mkdir, mkdtemp, readFile, readdir, rm, unlink, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import path from "node:path";
 import { Readable, Writable } from "node:stream";
@@ -108,6 +108,7 @@ describe("CLI usage", () => {
     expect(result.stdout).toContain("agent-markdown [--config <absolute-path>] context");
     expect(result.stdout).toContain("agent-markdown [--config <absolute-path>] search");
     expect(result.stdout).toContain("agent-markdown [--config <absolute-path>] capture");
+    expect(result.stdout).toContain("agent-markdown [--config <absolute-path>] init");
     expect(result.stdout).not.toMatch(/receipt|flush|obsidian|doctor|status/iu);
   });
 
@@ -135,6 +136,97 @@ describe("CLI usage", () => {
 
     expect(result.exitCode).toBe(2);
     expect(JSON.parse(result.stderr)).toEqual({ code: "E_INPUT_INVALID", message: "Input is invalid." });
+  });
+});
+
+describe("guided configuration", () => {
+  it("creates one validated config without changing the vault", async () => {
+    const root = await temporaryRoot();
+    const vault = path.join(root, "vault");
+    const workspace = path.join(root, "sample-project");
+    const memory = path.join(vault, "Memory");
+    const inbox = path.join(vault, "Inbox");
+    const configPath = path.join(root, "config", "config.json");
+    await mkdir(memory, { recursive: true });
+    await mkdir(inbox);
+    await mkdir(workspace);
+    await writeFile(path.join(memory, "Profile.md"), "Curated profile.\n", "utf8");
+    const vaultBefore = await readdir(vault, { recursive: true });
+
+    const result = await run(
+      ["--config", configPath, "init"],
+      [
+        vault,
+        workspace,
+        "",
+        "Memory/Profile.md",
+        "Memory",
+        "Inbox",
+        "yes",
+        "",
+      ].join("\n"),
+      { cwd: workspace },
+    );
+
+    expect(result.exitCode, result.stderr).toBe(0);
+    expect(result.stderr).toBe("");
+    expect(result.stdout).toContain("Configuration created.");
+    expect(JSON.parse(await readFile(configPath, "utf8"))).toEqual({
+      schemaVersion: 1,
+      vaultRoot: vault,
+      inboxPath: "Inbox",
+      captureMode: "explicit",
+      writeMode: "inbox",
+      defaultProjectId: "sample-project",
+      projects: [
+        {
+          projectId: "sample-project",
+          workspaceRoots: [workspace],
+          contextFiles: ["Memory/Profile.md"],
+          searchRoots: ["Memory"],
+        },
+      ],
+    });
+    expect(await readdir(vault, { recursive: true })).toEqual(vaultBefore);
+  });
+
+  it("refuses to overwrite an existing config before prompting", async () => {
+    const root = await temporaryRoot();
+    const configPath = path.join(root, "config.json");
+    const original = "{\"keep\":true}\n";
+    await writeFile(configPath, original, "utf8");
+
+    const result = await run(["--config", configPath, "init"]);
+
+    expect(result.exitCode).toBe(1);
+    expect(result.stdout).toBe("");
+    expect(JSON.parse(result.stderr)).toEqual({
+      code: "E_ALREADY_EXISTS",
+      message: "Destination already exists.",
+    });
+    expect(await readFile(configPath, "utf8")).toBe(original);
+  });
+
+  it("rejects an unsafe relative path without creating a config", async () => {
+    const root = await temporaryRoot();
+    const vault = path.join(root, "vault");
+    const workspace = path.join(root, "workspace");
+    const configPath = path.join(root, "config.json");
+    await mkdir(vault);
+    await mkdir(workspace);
+
+    const result = await run(
+      ["--config", configPath, "init"],
+      [vault, workspace, "project-a", "", "", "../Inbox", "no", ""].join("\n"),
+      { cwd: workspace },
+    );
+
+    expect(result.exitCode).toBe(2);
+    expect(JSON.parse(result.stderr)).toEqual({
+      code: "E_INPUT_INVALID",
+      message: "Input is invalid.",
+    });
+    await expect(readFile(configPath, "utf8")).rejects.toMatchObject({ code: "ENOENT" });
   });
 });
 

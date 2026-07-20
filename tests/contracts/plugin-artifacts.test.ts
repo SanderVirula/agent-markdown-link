@@ -137,6 +137,7 @@ describe.each(["codex", "claude"] as const)("%s plugin artifact", (host) => {
     );
 
     expect(helper).toContain("agent-markdown [--config <absolute-path>] search");
+    expect(helper).toContain("agent-markdown [--config <absolute-path>] init");
     expect(helper).toContain("SEARCH_REQUEST_BYTES");
   });
 

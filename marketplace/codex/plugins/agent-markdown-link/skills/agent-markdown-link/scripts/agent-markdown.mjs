@@ -851,8 +851,8 @@ var require_uri_all = __commonJS({
             wsComponents.secure = void 0;
           }
           if (wsComponents.resourceName) {
-            var _wsComponents$resourc = wsComponents.resourceName.split("?"), _wsComponents$resourc2 = slicedToArray(_wsComponents$resourc, 2), path4 = _wsComponents$resourc2[0], query = _wsComponents$resourc2[1];
-            wsComponents.path = path4 && path4 !== "/" ? path4 : void 0;
+            var _wsComponents$resourc = wsComponents.resourceName.split("?"), _wsComponents$resourc2 = slicedToArray(_wsComponents$resourc, 2), path5 = _wsComponents$resourc2[0], query = _wsComponents$resourc2[1];
+            wsComponents.path = path5 && path5 !== "/" ? path5 : void 0;
             wsComponents.query = query;
             wsComponents.resourceName = void 0;
           }
@@ -1225,12 +1225,12 @@ var require_util = __commonJS({
       return "'" + escapeQuotes(str) + "'";
     }
     function getPathExpr(currentPath, expr, jsonPointers, isNumber) {
-      var path4 = jsonPointers ? "'/' + " + expr + (isNumber ? "" : ".replace(/~/g, '~0').replace(/\\//g, '~1')") : isNumber ? "'[' + " + expr + " + ']'" : "'[\\'' + " + expr + " + '\\']'";
-      return joinPaths(currentPath, path4);
+      var path5 = jsonPointers ? "'/' + " + expr + (isNumber ? "" : ".replace(/~/g, '~0').replace(/\\//g, '~1')") : isNumber ? "'[' + " + expr + " + ']'" : "'[\\'' + " + expr + " + '\\']'";
+      return joinPaths(currentPath, path5);
     }
     function getPath(currentPath, prop, jsonPointers) {
-      var path4 = jsonPointers ? toQuotedString("/" + escapeJsonPointer(prop)) : toQuotedString(getProperty(prop));
-      return joinPaths(currentPath, path4);
+      var path5 = jsonPointers ? toQuotedString("/" + escapeJsonPointer(prop)) : toQuotedString(getProperty(prop));
+      return joinPaths(currentPath, path5);
     }
     var JSON_POINTER = /^\/(?:[^~]|~0|~1)*$/;
     var RELATIVE_JSON_POINTER = /^([0-9]+)(#|\/(?:[^~]|~0|~1)*)?$/;
@@ -7582,11 +7582,166 @@ async function writeText(stream, text) {
   await once(stream, "drain");
 }
 
+// packages/cli/dist/init.js
+import { access, mkdir as mkdir2, stat as stat3, writeFile } from "node:fs/promises";
+import path4 from "node:path";
+import { createInterface } from "node:readline";
+import { Transform } from "node:stream";
+var INIT_INPUT_BYTES = 64 * 1024;
+function invalidInput3() {
+  throw new AgentMarkdownError("E_INPUT_INVALID");
+}
+function systemErrorCode2(error) {
+  if (typeof error !== "object" || error === null || !("code" in error))
+    return void 0;
+  const code = error.code;
+  return typeof code === "string" ? code : void 0;
+}
+async function assertDestinationMissing(configPath) {
+  try {
+    await access(configPath);
+  } catch (error) {
+    if (systemErrorCode2(error) === "ENOENT")
+      return;
+    throw error;
+  }
+  throw new AgentMarkdownError("E_ALREADY_EXISTS");
+}
+function boundedInput(stream) {
+  let total = 0;
+  const bounded = new Transform({
+    transform(chunk, encoding, callback) {
+      const bytes = Buffer.isBuffer(chunk) ? chunk.byteLength : Buffer.byteLength(chunk, encoding);
+      total += bytes;
+      if (total > INIT_INPUT_BYTES) {
+        callback(new AgentMarkdownError("E_SIZE_LIMIT"));
+        return;
+      }
+      callback(null, chunk);
+    }
+  });
+  stream.pipe(bounded);
+  return bounded;
+}
+async function ask(lines, stdout, prompt, defaultValue) {
+  await writeText(stdout, prompt);
+  const answer = await lines.next();
+  if (answer.done === true)
+    invalidInput3();
+  const value = answer.value.trim();
+  if (value.length > 0)
+    return value;
+  if (defaultValue !== void 0)
+    return defaultValue;
+  invalidInput3();
+}
+function list(value) {
+  if (value.length === 0)
+    return [];
+  const items = value.split(",").map((item) => item.trim());
+  if (items.some((item) => item.length === 0))
+    invalidInput3();
+  return items;
+}
+function projectIdFrom(workspaceRoot) {
+  const candidate = path4.basename(workspaceRoot).toLowerCase().replace(/[^a-z0-9._-]+/gu, "-").replace(/^[._-]+/u, "").slice(0, 64);
+  return candidate.length === 0 ? "default" : candidate;
+}
+function confirmation(value) {
+  if (value === "" || /^n(?:o)?$/iu.test(value))
+    return false;
+  if (/^y(?:es)?$/iu.test(value))
+    return true;
+  invalidInput3();
+}
+async function assertDirectory(directory) {
+  try {
+    if ((await stat3(directory)).isDirectory())
+      return;
+  } catch {
+  }
+  invalidInput3();
+}
+async function initializeConfig(options) {
+  await assertDestinationMissing(options.configPath);
+  const input = boundedInput(options.io.stdin);
+  const interface_ = createInterface({ input, terminal: false });
+  const lines = interface_[Symbol.asyncIterator]();
+  try {
+    const vaultRoot = await ask(lines, options.io.stdout, "Vault root (absolute path): ");
+    const workspaceRoot = await ask(lines, options.io.stdout, `Workspace root [${options.cwd}]: `, options.cwd);
+    const suggestedProjectId = projectIdFrom(workspaceRoot);
+    const projectId = await ask(lines, options.io.stdout, `Project ID [${suggestedProjectId}]: `, suggestedProjectId);
+    const contextFiles = list(await ask(lines, options.io.stdout, "Context files, comma-separated and vault-relative [none]: ", ""));
+    const searchRoots = list(await ask(lines, options.io.stdout, "Search roots, comma-separated and vault-relative [none]: ", ""));
+    const inboxPath = await ask(lines, options.io.stdout, "Existing review Inbox, relative to vault [Inbox/Agent Markdown Link]: ", "Inbox/Agent Markdown Link");
+    const useAsDefault = confirmation(await ask(lines, options.io.stdout, "Use this project for unmapped hosts such as Cowork? [y/N]: ", ""));
+    const rawConfig = {
+      schemaVersion: 1,
+      vaultRoot,
+      inboxPath,
+      captureMode: "explicit",
+      writeMode: "inbox",
+      ...useAsDefault ? { defaultProjectId: projectId } : {},
+      projects: [
+        {
+          projectId,
+          workspaceRoots: [workspaceRoot],
+          contextFiles,
+          searchRoots
+        }
+      ]
+    };
+    let validated;
+    try {
+      validated = validateConfig(rawConfig);
+      await assertDirectory(validated.vaultRoot);
+      await assertDirectory(validated.projects[0].workspaceRoots[0]);
+    } catch (error) {
+      if (error instanceof AgentMarkdownError && error.code === "E_INPUT_INVALID")
+        throw error;
+      invalidInput3();
+    }
+    const config = {
+      ...rawConfig,
+      vaultRoot: validated.vaultRoot,
+      projects: [
+        {
+          ...rawConfig.projects[0],
+          workspaceRoots: validated.projects[0].workspaceRoots
+        }
+      ]
+    };
+    await mkdir2(path4.dirname(options.configPath), { recursive: true, mode: 448 });
+    try {
+      await writeFile(options.configPath, `${JSON.stringify(config, null, 2)}
+`, {
+        encoding: "utf8",
+        flag: "wx",
+        mode: 384
+      });
+    } catch (error) {
+      if (systemErrorCode2(error) === "EEXIST") {
+        throw new AgentMarkdownError("E_ALREADY_EXISTS", { cause: error });
+      }
+      throw error;
+    }
+    await writeText(options.io.stdout, `Configuration created.
+${options.configPath}
+`);
+  } finally {
+    interface_.close();
+    options.io.stdin.unpipe(input);
+    input.destroy();
+  }
+}
+
 // packages/cli/dist/main.js
 var HELP = `Usage:
   agent-markdown [--config <absolute-path>] context
   agent-markdown [--config <absolute-path>] search
   agent-markdown [--config <absolute-path>] capture
+  agent-markdown [--config <absolute-path>] init
   agent-markdown --help
 `;
 var INPUT_ERROR_CODES = /* @__PURE__ */ new Set([
@@ -7595,7 +7750,7 @@ var INPUT_ERROR_CODES = /* @__PURE__ */ new Set([
   "E_SIZE_LIMIT",
   "E_SECRET_FOUND"
 ]);
-function invalidInput3() {
+function invalidInput4() {
   throw new AgentMarkdownError("E_INPUT_INVALID");
 }
 function isAbsoluteLocalPath2(value) {
@@ -7623,13 +7778,14 @@ function parseCli(argv) {
   if (parsed.values.help === true)
     return { command: "help" };
   if (parsed.positionals.length !== 1)
-    invalidInput3();
+    invalidInput4();
   const command = parsed.positionals[0];
-  if (command !== "context" && command !== "search" && command !== "capture")
-    invalidInput3();
+  if (command !== "context" && command !== "search" && command !== "capture" && command !== "init") {
+    invalidInput4();
+  }
   const configPath = parsed.values.config;
   if (configPath !== void 0 && !isAbsoluteLocalPath2(configPath))
-    invalidInput3();
+    invalidInput4();
   return { command, ...configPath === void 0 ? {} : { configPath } };
 }
 async function main(argv, io, environment2 = {}) {
@@ -7639,13 +7795,25 @@ async function main(argv, io, environment2 = {}) {
       await writeText(io.stdout, HELP);
       return 0;
     }
+    if (parsed.command === "init") {
+      const configPath = resolveConfigPath({
+        ...parsed.configPath === void 0 ? {} : { cliPath: parsed.configPath },
+        ...environment2.env === void 0 ? {} : { env: environment2.env }
+      });
+      await initializeConfig({
+        configPath,
+        cwd: environment2.cwd ?? process.cwd(),
+        io
+      });
+      return 0;
+    }
     const config = await loadConfig({
       ...parsed.configPath === void 0 ? {} : { cliPath: parsed.configPath },
       ...environment2.env === void 0 ? {} : { env: environment2.env }
     });
     const project = await selectProject(config, environment2.cwd ?? process.cwd());
     if (project === void 0)
-      invalidInput3();
+      invalidInput4();
     if (parsed.command === "context") {
       await writeText(io.stdout, await assembleContext(config, project));
     } else if (parsed.command === "search") {

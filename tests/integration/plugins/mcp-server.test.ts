@@ -18,8 +18,6 @@ const runtime = path.join(
   "mcp-server.mjs",
 );
 const temporaryRoots: string[] = [];
-const unavailable =
-  "Agent Markdown Link curated context is unavailable for this session. Continue without assuming memory was loaded.";
 
 afterEach(async () => {
   await Promise.all(temporaryRoots.splice(0).map((root) => rm(root, { recursive: true, force: true })));
@@ -120,41 +118,15 @@ it("serves context, search, and review-only capture over packaged stdio MCP", as
       "capture",
     ]);
 
-    const startup = await client.callTool({
+    const startup = await client.callTool({ name: "context", arguments: {} });
+    expect(startup.isError).not.toBe(true);
+    expect(textContent(startup)).toContain("First curated MCP fact.");
+
+    const obsoleteArguments = await client.callTool({
       name: "context",
       arguments: { hookEventName: "SessionStart", sessionId: "session-one" },
     });
-    const startupOutput = JSON.parse(textContent(startup)) as {
-      readonly hookSpecificOutput: {
-        readonly hookEventName: string;
-        readonly additionalContext: string;
-      };
-    };
-    expect(startupOutput.hookSpecificOutput.hookEventName).toBe("SessionStart");
-    expect(startupOutput.hookSpecificOutput.additionalContext).toContain(
-      "First curated MCP fact.",
-    );
-
-    const duplicateFallback = await client.callTool({
-      name: "context",
-      arguments: { hookEventName: "UserPromptSubmit", sessionId: "session-one" },
-    });
-    expect(textContent(duplicateFallback)).toBe("");
-
-    const connectedFallback = await client.callTool({
-      name: "context",
-      arguments: { hookEventName: "UserPromptSubmit", sessionId: "session-two" },
-    });
-    const fallbackOutput = JSON.parse(textContent(connectedFallback)) as {
-      readonly hookSpecificOutput: {
-        readonly hookEventName: string;
-        readonly additionalContext: string;
-      };
-    };
-    expect(fallbackOutput.hookSpecificOutput.hookEventName).toBe("UserPromptSubmit");
-    expect(fallbackOutput.hookSpecificOutput.additionalContext).toContain(
-      "First curated MCP fact.",
-    );
+    expect(obsoleteArguments.isError).toBe(true);
 
     const search = await client.callTool({
       name: "search",
@@ -215,11 +187,11 @@ it("returns only fixed diagnostics when host configuration is unavailable", asyn
 
   try {
     await client.connect(transport);
-    const context = await client.callTool({
-      name: "context",
-      arguments: { hookEventName: "SessionStart", sessionId: "failure-session" },
-    });
-    expect(textContent(context)).toContain(unavailable);
+    const context = await client.callTool({ name: "context", arguments: {} });
+    expect(context.isError).toBe(true);
+    expect(textContent(context)).toBe(
+      '{"code":"E_CONFIG_INVALID","message":"Configuration is invalid."}',
+    );
     expect(textContent(context)).not.toContain(root);
 
     const search = await client.callTool({

@@ -7,10 +7,10 @@ Agent Markdown Link requires Node.js 22 or newer. It uses local Markdown files o
 Add the marketplace once, then install `agent-markdown-link` from it in the host's plugin manager:
 
 ```text
-codex plugin marketplace add SanderVirula/agent-markdown-link
+codex plugin marketplace add SSanderV/agent-markdown-link
 codex plugin add agent-markdown-link@agent-markdown-link
 
-claude plugin marketplace add SanderVirula/agent-markdown-link
+claude plugin marketplace add SSanderV/agent-markdown-link
 claude plugin install agent-markdown-link@agent-markdown-link
 ```
 
@@ -18,7 +18,25 @@ Review and trust any host hook prompt before enabling it. Start a new host sessi
 
 For Cowork, install and enable the plugin in Claude Desktop. The bundled MCP server runs locally through Desktop and reads the normal host configuration; no configuration or vault copy belongs inside the Cowork sandbox. Cowork sessions without the Desktop local bridge cannot access the local vault.
 
-## Configure
+## Guided setup
+
+After installation, ask your agent to **initialize Agent Markdown Link for this workspace**. The installed skill resolves its bundled helper and gives you the exact `node <absolute-script> init` command to run in an interactive local terminal.
+
+From a source checkout, the equivalent commands are:
+
+```text
+# macOS/Linux
+./node_modules/.bin/agent-markdown init
+
+# Windows PowerShell
+.\node_modules\.bin\agent-markdown.cmd init
+```
+
+The wizard asks for one vault, workspace mapping, project ID, ordered context files, search roots, existing review Inbox, and optional Cowork default. It validates the config and existing vault/workspace roots, writes only the local config file, and refuses to overwrite one that already exists. It never creates or edits vault notes or folders. Create the chosen Inbox and any referenced files or folders in your vault before using their paths.
+
+Use `--config <absolute-path>` before `init` to write a non-default config location.
+
+## Manual configuration
 
 Create a config file using [the synthetic example](reference/example-config.json). Replace every example path with your own local paths; vault-relative paths use `/`.
 

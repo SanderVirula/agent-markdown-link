@@ -44135,8 +44135,6 @@ async function selectProject(config2, cwd) {
 // packages/cli/dist/mcp-server.js
 var CONTEXT_BYTES = 9e3;
 var MCP_FRAME_BYTES = 2 * 1024 * 1024;
-var UNAVAILABLE = "Agent Markdown Link curated context is unavailable for this session. Continue without assuming memory was loaded.";
-var HOOK_EVENTS = ["SessionStart", "UserPromptSubmit"];
 var CANDIDATE_KINDS = [
   "decision",
   "fact",
@@ -44150,14 +44148,6 @@ function text(textValue) {
 }
 function errorResult(error51) {
   return { ...text(JSON.stringify(toSanitizedDiagnostic(error51))), isError: true };
-}
-function hookOutput(hookEventName, additionalContext) {
-  return JSON.stringify({
-    hookSpecificOutput: {
-      hookEventName,
-      additionalContext
-    }
-  });
 }
 function boundedStdin() {
   let pendingBytes = 0;
@@ -44203,23 +44193,17 @@ async function configuredProject(environment2) {
   return { config: config2, project };
 }
 function createMcpServer(environment2 = { env: process.env }) {
-  const deliveredSessions = /* @__PURE__ */ new Set();
   const server = new McpServer({ name: "agent-markdown-link", version: "0.2.2" });
   server.registerTool("context", {
     description: "Read curated Markdown context for the configured local project.",
-    inputSchema: external_exports.object({
-      hookEventName: external_exports.enum(HOOK_EVENTS).optional(),
-      sessionId: external_exports.string().min(1).max(256).optional()
-    }).strict().refine((value) => value.hookEventName === void 0 === (value.sessionId === void 0), "hookEventName and sessionId must be supplied together"),
+    inputSchema: external_exports.object({}).strict(),
     annotations: {
       readOnlyHint: true,
       destructiveHint: false,
       idempotentHint: true,
       openWorldHint: false
     }
-  }, async ({ hookEventName, sessionId }) => {
-    if (sessionId !== void 0 && deliveredSessions.has(sessionId))
-      return text("");
+  }, async () => {
     try {
       const { config: config2, project } = await configuredProject(environment2);
       const context = await assembleContext({
@@ -44229,14 +44213,8 @@ function createMcpServer(environment2 = { env: process.env }) {
           hookOutputBytes: Math.min(config2.limits.hookOutputBytes, CONTEXT_BYTES)
         }
       }, project);
-      if (sessionId !== void 0)
-        deliveredSessions.add(sessionId);
-      return text(hookEventName === void 0 ? context : hookOutput(hookEventName, context));
+      return text(context);
     } catch (error51) {
-      if (sessionId !== void 0 && hookEventName !== void 0) {
-        deliveredSessions.add(sessionId);
-        return text(hookOutput(hookEventName, UNAVAILABLE));
-      }
       return errorResult(error51);
     }
   });

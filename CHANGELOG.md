@@ -1,5 +1,11 @@
 # Changelog
 
+## Unreleased
+
+- Add a guided, no-overwrite `init` command for local configuration.
+- Simplify the Claude MCP `context` tool to its intended empty input object.
+- Update public repository and marketplace links for the renamed GitHub account.
+
 ## 0.2.2 - 2026-07-20
 
 - Add an explicit default-project fallback so Claude Desktop Cowork can use the same configured local vault when its workspace path cannot match a host mapping.

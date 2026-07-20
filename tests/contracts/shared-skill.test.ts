@@ -5,6 +5,16 @@ import { describe, expect, it } from "vitest";
 const skillUrl = new URL("../../skills/agent-markdown-link/SKILL.md", import.meta.url);
 
 describe("shared agent skill", () => {
+  it("makes first-time guided setup discoverable without guessing user choices", async () => {
+    const text = await readFile(skillUrl, "utf8");
+
+    expect(text).toMatch(/^---\nname: agent-markdown-link\ndescription: Use when .*initial/isu);
+    expect(text).toMatch(/explicitly asks.*(?:initialize|configure).*bundled CLI.*\binit\b/isu);
+    expect(text).toMatch(/interactive local terminal/iu);
+    expect(text).toMatch(/refuses to overwrite/iu);
+    expect(text).toMatch(/do not invent.*setup values/isu);
+  });
+
   it("teaches automatic context and reviewed capture to both hosts", async () => {
     const text = await readFile(skillUrl, "utf8");
 

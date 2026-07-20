@@ -9,14 +9,16 @@ Obsidian is optional: it can be a convenient editor and review surface, but does
 Node.js 22 or newer is required. Add this marketplace to the host you use:
 
 ```text
-codex plugin marketplace add SanderVirula/agent-markdown-link
+codex plugin marketplace add SSanderV/agent-markdown-link
 codex plugin add agent-markdown-link@agent-markdown-link
 
-claude plugin marketplace add SanderVirula/agent-markdown-link
+claude plugin marketplace add SSanderV/agent-markdown-link
 claude plugin install agent-markdown-link@agent-markdown-link
 ```
 
 Full configuration, upgrade, uninstall, and rollback instructions are in [INSTALL](docs/INSTALL.md).
+
+After installation, ask your agent to **initialize Agent Markdown Link for this workspace**. The bundled skill will give you the exact local command for the guided `init` wizard, which validates your choices and refuses to replace an existing configuration.
 
 ## How it works
 
@@ -35,13 +37,15 @@ From a source checkout, use the workspace-local CLI; global installation is not 
 
 ```text
 # macOS/Linux
+./node_modules/.bin/agent-markdown init
 ./node_modules/.bin/agent-markdown --config /absolute/path/to/config.json context
 
 # Windows PowerShell
+.\node_modules\.bin\agent-markdown.cmd init
 .\node_modules\.bin\agent-markdown.cmd --config C:\absolute\path\to\config.json context
 ```
 
-`context` reads the configured files in order. `search` accepts one JSON query on standard input and searches only configured Markdown roots; results are lexical, bounded, and report truncation. `capture` accepts one JSON candidate and creates a relative Inbox path without returning submitted content or an absolute vault path. See [the synthetic configuration](docs/reference/example-config.json).
+`init` interactively creates one local config and never overwrites an existing one. It does not create or edit vault content. `context` reads the configured files in order. `search` accepts one JSON query on standard input and searches only configured Markdown roots; results are lexical, bounded, and report truncation. `capture` accepts one JSON candidate and creates a relative Inbox path without returning submitted content or an absolute vault path. See [the synthetic configuration](docs/reference/example-config.json).
 
 ## Security and project links
 

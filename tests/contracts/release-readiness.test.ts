@@ -60,8 +60,8 @@ describe("public release surface", () => {
     const readme = await readFile(path.join(repositoryRoot, "README.md"), "utf8");
     const install = await readFile(path.join(repositoryRoot, "docs", "INSTALL.md"), "utf8");
 
-    expect(readme).toContain("codex plugin marketplace add SanderVirula/agent-markdown-link");
-    expect(readme).toContain("claude plugin marketplace add SanderVirula/agent-markdown-link");
+    expect(readme).toContain("codex plugin marketplace add SSanderV/agent-markdown-link");
+    expect(readme).toContain("claude plugin marketplace add SSanderV/agent-markdown-link");
     expect(install).toContain("%APPDATA%\\agent-markdown-link\\config.json");
     expect(install).toContain("~/Library/Application Support/agent-markdown-link/config.json");
     expect(install).toContain("~/.config/agent-markdown-link/config.json");
@@ -76,15 +76,15 @@ describe("public release surface", () => {
     expect(manifest).toMatchObject({
       name: "agent-markdown-link",
       version: "0.2.2",
-      homepage: "https://github.com/SanderVirula/agent-markdown-link",
-      repository: "https://github.com/SanderVirula/agent-markdown-link",
+      homepage: "https://github.com/SSanderV/agent-markdown-link",
+      repository: "https://github.com/SSanderV/agent-markdown-link",
     });
     expect(interfaceMetadata).toMatchObject({
-      websiteURL: "https://github.com/SanderVirula/agent-markdown-link",
+      websiteURL: "https://github.com/SSanderV/agent-markdown-link",
       privacyPolicyURL:
-        "https://github.com/SanderVirula/agent-markdown-link/blob/main/PRIVACY.md",
+        "https://github.com/SSanderV/agent-markdown-link/blob/main/PRIVACY.md",
       termsOfServiceURL:
-        "https://github.com/SanderVirula/agent-markdown-link/blob/main/TERMS.md",
+        "https://github.com/SSanderV/agent-markdown-link/blob/main/TERMS.md",
       brandColor: "#4F46E5",
       composerIcon: "./assets/icon.svg",
       logo: "./assets/logo.svg",

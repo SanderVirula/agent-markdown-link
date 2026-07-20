@@ -9,6 +9,7 @@ import {
   loadConfig,
   parseCandidateRequest,
   parseSearchRequest,
+  resolveConfigPath,
   searchMarkdown,
   selectProject,
   toSanitizedDiagnostic,
@@ -16,11 +17,13 @@ import {
 } from "@agent-markdown-link/core";
 
 import { readJsonInput, writeText } from "./io.js";
+import { initializeConfig } from "./init.js";
 
 const HELP = `Usage:
   agent-markdown [--config <absolute-path>] context
   agent-markdown [--config <absolute-path>] search
   agent-markdown [--config <absolute-path>] capture
+  agent-markdown [--config <absolute-path>] init
   agent-markdown --help
 `;
 
@@ -63,14 +66,21 @@ function parseArguments(argv: readonly string[]) {
 }
 
 function parseCli(argv: readonly string[]): {
-  readonly command: "context" | "search" | "capture" | "help";
+  readonly command: "context" | "search" | "capture" | "init" | "help";
   readonly configPath?: string;
 } {
   const parsed = parseArguments(argv);
   if (parsed.values.help === true) return { command: "help" };
   if (parsed.positionals.length !== 1) invalidInput();
   const command = parsed.positionals[0];
-  if (command !== "context" && command !== "search" && command !== "capture") invalidInput();
+  if (
+    command !== "context" &&
+    command !== "search" &&
+    command !== "capture" &&
+    command !== "init"
+  ) {
+    invalidInput();
+  }
   const configPath = parsed.values.config;
   if (configPath !== undefined && !isAbsoluteLocalPath(configPath)) invalidInput();
   return { command, ...(configPath === undefined ? {} : { configPath }) };
@@ -85,6 +95,19 @@ export async function main(
     const parsed = parseCli(argv);
     if (parsed.command === "help") {
       await writeText(io.stdout, HELP);
+      return 0;
+    }
+
+    if (parsed.command === "init") {
+      const configPath = resolveConfigPath({
+        ...(parsed.configPath === undefined ? {} : { cliPath: parsed.configPath }),
+        ...(environment.env === undefined ? {} : { env: environment.env }),
+      });
+      await initializeConfig({
+        configPath,
+        cwd: environment.cwd ?? process.cwd(),
+        io,
+      });
       return 0;
     }
 
