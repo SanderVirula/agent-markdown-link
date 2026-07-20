@@ -21,7 +21,7 @@
     "validate:plugins": "vitest run tests/contracts/plugin-artifacts.test.ts",
     "package:artifacts": "node scripts/package-artifacts.mjs",
     "test:release": "vitest run tests/contracts/release-readiness.test.ts tests/contracts/shared-skill.test.ts",
-    "ci": "npm run typecheck && npm run lint && npm run build && npm run validate:schemas && npm run test:unit && npm run test:integration && npm run test:security && npm run validate:plugins && npm run test:release"
+    "ci": "npm run build && npm run typecheck && npm run lint && npm run validate:schemas && npm run test:unit && npm run test:integration && npm run test:security && npm run validate:plugins && npm run test:release"
   },
   "devDependencies": {
     "@types/node": "26.1.1",

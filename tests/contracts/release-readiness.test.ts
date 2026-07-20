@@ -149,7 +149,7 @@ describe("public release surface", () => {
 
     expect(scripts).not.toHaveProperty("verify:pack");
     expect(scripts).not.toHaveProperty("verify:clean");
-    expect(scripts.ci).toBe("npm run typecheck && npm run lint && npm run build && npm run validate:schemas && npm run test:unit && npm run test:integration && npm run test:security && npm run validate:plugins && npm run test:release");
+    expect(scripts.ci).toBe("npm run build && npm run typecheck && npm run lint && npm run validate:schemas && npm run test:unit && npm run test:integration && npm run test:security && npm run validate:plugins && npm run test:release");
     expect(scripts["test:release"]).toBe(
       "vitest run tests/contracts/release-readiness.test.ts tests/contracts/shared-skill.test.ts",
     );
