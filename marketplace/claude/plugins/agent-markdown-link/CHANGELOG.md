@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.4.2 - 2026-07-21
+
+- Preserve usable Codex startup context when configured notes exceed the hook output limit by packing complete notes in order and reporting bounded omissions.
+- Retain fail-closed per-file validation, bounded reads, and deterministic output while continuing to later notes that still fit.
+
 ## 0.4.1 - 2026-07-20
 
 - Standardize public marketplace and plugin author metadata on `SSanderV`.

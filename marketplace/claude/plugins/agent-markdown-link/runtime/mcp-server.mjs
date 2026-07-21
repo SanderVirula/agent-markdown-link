@@ -44327,7 +44327,7 @@ async function configuredProject(environment2) {
   return { config: config2, project };
 }
 function createMcpServer(environment2 = { env: process.env }) {
-  const server = new McpServer({ name: "agent-markdown-link", version: "0.4.1" });
+  const server = new McpServer({ name: "agent-markdown-link", version: "0.4.2" });
   server.registerTool("context", {
     description: "Read curated Markdown context for the configured local project.",
     inputSchema: external_exports.object({}).strict(),
